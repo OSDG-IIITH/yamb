@@ -56,20 +56,11 @@ class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # @commands.command()
-    # async def join(self, ctx, *, channel: discord.VoiceChannel):
-    #     """Joins a voice channel"""
-
-    #     if ctx.voice_client is not None:
-    #         return await ctx.voice_client.move_to(channel)
-
-    #     await channel.connect()
-
-
     @commands.command()
-    async def play(self, ctx, *, url):
-        """Plays music from url"""
+    async def play(self, ctx, *args):
+        """Plays music from query"""
 
+        url = ' '.join(args)
         async with ctx.typing():
             player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
             ctx.voice_client.play(player, after=lambda e: print('Player error: %s' % e) if e else None)
