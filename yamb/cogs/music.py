@@ -83,6 +83,16 @@ class Music(commands.Cog):
 
         await ctx.voice_client.disconnect()
 
+    @commands.command()
+    async def np(self, ctx):
+        """Display the currently playing track"""
+
+        if ctx.voice_client is None:
+            return await ctx.send("Not connected to a voice channel.")
+
+        await ctx.send(f"Now playing: {ctx.voice_client.source.title}")
+
+
     @play.before_invoke
     async def ensure_voice(self, ctx):
         if ctx.voice_client is None:
