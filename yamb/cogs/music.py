@@ -1,4 +1,6 @@
 import asyncio
+import os
+import requests
 
 import discord
 import youtube_dl
@@ -60,6 +62,21 @@ class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    def metadata(self, title):
+        """Get metadata from last.fm"""
+        api_key = os.environ.get('LASTFM_API_KEY')
+
+        url = ["http://ws.audioscrobbler.com/2.0/?method=track.search"]
+        url.append("track=" + title)
+        url.append("api_key=" + api_key)
+        url.append("format=json")
+
+        response = requests.get('&'.join(url))
+        meta = response.json()
+
+        return (meta['results']['trackmatches']['track'][0]['name'],
+                meta['results']['trackmatches']['track'][0]['artist'])
+
     @commands.command()
     async def play(self, ctx, *args):
         """Plays music from query"""
@@ -94,10 +111,16 @@ class Music(commands.Cog):
         if ctx.voice_client is None:
             return await ctx.send("Not connected to a voice channel.")
 
-        title = self.artist_title[1] or ctx.voice_client.source.title
-        artist = self.artist_title[0] or self.channel
+        title, artist = self.metadata(ctx.voice_client.source.artist_title[1] or ctx.voice_client.source.title)
 
-        await ctx.send(f"Now playing: {artist} - {title}")
+        title = title or ctx.voice_client.source.artist_title[1] or ctx.voice_client.source.title
+        artist = artist or ctx.voice_client.source.artist_title[0] or ctx.voice_client.source.channel
+
+        msg = ["Now playing"]
+        msg.append(f"Title: {title}")
+        msg.append(f"Artist: {artist}")
+
+        await ctx.send('\n'.join(msg))
 
 
     @play.before_invoke
