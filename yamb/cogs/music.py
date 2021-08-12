@@ -4,6 +4,7 @@ import discord
 import youtube_dl
 
 from discord.ext import commands
+from youtube_title_parse import get_artist_title
 
 # Suppress noise about console usage from errors
 youtube_dl.utils.bug_reports_message = lambda: ''
@@ -38,6 +39,9 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
         self.title = data.get('title')
         self.url = data.get('url')
+        self.channel = data.get('channel')
+
+        self.artist_title = get_artist_title(self.title)
 
     @classmethod
     async def from_url(cls, url, *, loop=None, stream=False):
@@ -65,7 +69,7 @@ class Music(commands.Cog):
             player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
             ctx.voice_client.play(player, after=lambda e: print('Player error: %s' % e) if e else None)
 
-        await ctx.send('Now playing: {}'.format(player.title))
+        await self.np(ctx)
 
     @commands.command()
     async def volume(self, ctx, volume: int):
@@ -90,7 +94,10 @@ class Music(commands.Cog):
         if ctx.voice_client is None:
             return await ctx.send("Not connected to a voice channel.")
 
-        await ctx.send(f"Now playing: {ctx.voice_client.source.title}")
+        title = self.artist_title[1] or ctx.voice_client.source.title
+        artist = self.artist_title[0] or self.channel
+
+        await ctx.send(f"Now playing: {artist} - {title}")
 
 
     @play.before_invoke
