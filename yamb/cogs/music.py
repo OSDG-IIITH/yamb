@@ -42,6 +42,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
         self.title = data.get('title')
         self.url = data.get('url')
         self.channel = data.get('channel')
+        self.thumb = data.get('thumbnail_url')
 
         self.artist_title = get_artist_title(self.title)
 
@@ -72,10 +73,31 @@ class Music(commands.Cog):
         url.append("format=json")
 
         response = requests.get('&'.join(url))
-        meta = response.json()
 
-        return (meta['results']['trackmatches']['track'][0]['name'],
-                meta['results']['trackmatches']['track'][0]['artist'])
+        if response:
+            meta = response.json()
+            try:
+                title = meta['results']['trackmatches']['track'][0]['name']
+                artist = meta['results']['trackmatches']['track'][0]['artist']
+            except KeyError:
+                title, artist = None, None
+
+        # get album art
+        url = ["http://ws.audioscrobbler.com/2.0/?method=track.getInfo"]
+        url.append("track=" + title)
+        url.append("artist=" + artist)
+        url.append("api_key=" + api_key)
+        url.append("format=json")
+
+        response = requests.get('&'.join(url))
+        if response:
+            meta = response.json()
+            try:
+                album_art = meta['track']['album']['image'][2]['#text']
+            except KeyError:
+                album_art = None
+
+        return title, artist, album_art
 
     @commands.command()
     async def play(self, ctx, *args):
@@ -111,17 +133,17 @@ class Music(commands.Cog):
         if ctx.voice_client is None:
             return await ctx.send("Not connected to a voice channel.")
 
-        title, artist = self.metadata(ctx.voice_client.source.artist_title[1] or ctx.voice_client.source.title)
+        meta = self.metadata(ctx.voice_client.source.artist_title[1] or ctx.voice_client.source.title)
+        title = meta[0] or ctx.voice_client.source.artist_title[1] or ctx.voice_client.source.title
+        artist = meta[1] or ctx.voice_client.source.artist_title[0] or ctx.voice_client.source.channel
+        album_art = meta[2] or ctx.voice_client.source.thumb
 
-        title = title or ctx.voice_client.source.artist_title[1] or ctx.voice_client.source.title
-        artist = artist or ctx.voice_client.source.artist_title[0] or ctx.voice_client.source.channel
+        embed = discord.Embed(title="Now playing")
+        embed.set_image(url=album_art)
+        embed.add_field(name="Title", value=title)
+        embed.add_field(name="Artist", value=artist)
 
-        msg = ["Now playing"]
-        msg.append(f"Title: {title}")
-        msg.append(f"Artist: {artist}")
-
-        await ctx.send('\n'.join(msg))
-
+        await ctx.send(embed=embed)
 
     @play.before_invoke
     async def ensure_voice(self, ctx):
