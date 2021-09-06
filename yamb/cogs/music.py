@@ -63,9 +63,10 @@ class Music(commands.Cog):
         url = ' '.join(args)
         async with ctx.typing():
             player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
+            player.requester = ctx.author
             ctx.voice_client.play(player, after=lambda e: print('Player error: %s' % e) if e else None)
 
-        await ctx.send('Now playing: {}'.format(player.title))
+        await self.np(ctx)
 
     @commands.command()
     async def np(self, ctx):
@@ -75,8 +76,16 @@ class Music(commands.Cog):
             return await ctx.send("Not connected to a voice channel.")
 
         title = ctx.voice_client.source.title
+        url = ctx.voice_client.source.url
+        requester = ctx.voice_client.source.requester
 
-        await ctx.send(f'Now playing: {title}')
+        embed = discord.Embed()
+        embed.add_field(name="Now playing",
+                        value=f'[{title}]({url})')
+        embed.add_field(name="Requested by",
+                        value=requester.mention)
+
+        await ctx.send(embed=embed)
 
     @commands.command(aliases=['vol'])
     async def volume(self, ctx, volume: int):
