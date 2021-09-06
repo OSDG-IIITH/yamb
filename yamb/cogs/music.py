@@ -87,6 +87,17 @@ class Music(commands.Cog):
 
         await ctx.send(embed=embed)
 
+    @commands.command()
+    async def pause(self, ctx):
+        """Pauses the player"""
+        ctx.voice_client.pause()
+
+    @commands.command()
+    async def resume(self, ctx):
+        """Resumes the player"""
+        ctx.voice_client.resume()
+
+
     @commands.command(aliases=['vol'])
     async def volume(self, ctx, volume: int):
         """Changes the player's volume"""
