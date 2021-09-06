@@ -56,7 +56,7 @@ class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @commands.command(aliases=['p'])
     async def play(self, ctx, *args):
         """Plays music from query"""
 
@@ -78,7 +78,7 @@ class Music(commands.Cog):
 
         await ctx.send(f'Now playing: {title}')
 
-    @commands.command()
+    @commands.command(aliases=['vol'])
     async def volume(self, ctx, volume: int):
         """Changes the player's volume"""
 
@@ -88,7 +88,7 @@ class Music(commands.Cog):
         ctx.voice_client.source.volume = volume / 100
         await ctx.send("Changed volume to {}%".format(volume))
 
-    @commands.command()
+    @commands.command(aliases=['dc'])
     async def stop(self, ctx):
         """Stops and disconnects the bot from voice"""
 
