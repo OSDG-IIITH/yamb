@@ -68,6 +68,17 @@ class Music(commands.Cog):
         await ctx.send('Now playing: {}'.format(player.title))
 
     @commands.command()
+    async def np(self, ctx):
+        """Display the currently playing track"""
+
+        if ctx.voice_client is None:
+            return await ctx.send("Not connected to a voice channel.")
+
+        title = ctx.voice_client.source.title
+
+        await ctx.send(f'Now playing: {title}')
+
+    @commands.command()
     async def volume(self, ctx, volume: int):
         """Changes the player's volume"""
 
